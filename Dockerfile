@@ -10,8 +10,17 @@ COPY . .
 
 ENV FLASK_APP=app.py
 
-# Railway provides PORT environment variable
-EXPOSE $PORT
+EXPOSE 8080
 
-# Use Railway's PORT environment variable
-CMD ["sh", "-c", "gunicorn --workers 2 --bind 0.0.0.0:$PORT app:app"]
+# Create a startup script to handle port properly
+RUN echo '#!/bin/bash\n\
+# Set default port if PORT is not set\n\
+if [ -z "$PORT" ]; then\n\
+    export PORT=8080\n\
+fi\n\
+echo "Starting gunicorn on port $PORT"\n\
+exec gunicorn --workers 2 --bind 0.0.0.0:$PORT app:app' > /start.sh
+
+RUN chmod +x /start.sh
+
+CMD ["/start.sh"]
