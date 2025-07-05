@@ -3,11 +3,11 @@ service:
     name: flask-live-crud
     env: python
     buildCommand: pip install -r requirements.txt
-    startCommand: python -m flask run --host=0.0.0.0 --port=$PORT
+    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
     envVars:
-      - key: FLASK_APP
-        value: app.py
-      - key: DB_URL
+      - key: PYTHON_VERSION
+        value: 3.12
+      - key: DATABASE_URL
         fromDatabase:
           name: flask-crud-db
           property: connectionString
