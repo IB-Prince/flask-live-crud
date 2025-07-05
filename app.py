@@ -8,7 +8,8 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 
 # Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DB_URL') or os.getenv('DATABASE_URL')
+db_url = os.getenv('DB_URL') or os.getenv('DATABASE_URL').replace('postgres://', 'postgresql://')
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
