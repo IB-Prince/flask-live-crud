@@ -8,7 +8,17 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 
 # Configuration
-db_url = os.getenv('DB_URL') or os.getenv('DATABASE_URL').replace('postgres://', 'postgresql://')
+db_url = os.getenv('DB_URL')
+if not db_url:
+    database_url = os.getenv('DATABASE_URL')
+    if database_url:
+        # Fix Heroku/Railway postgres:// to postgresql://
+        db_url = database_url.replace('postgres://', 'postgresql://') if database_url.startswith('postgres://') else database_url
+    else:
+        # Default for development (this will fail in production, which is expected)
+        db_url = 'postgresql://user:password@localhost:5432/database'
+
+print(f"🔗 Using database URL: {db_url[:50]}..." if db_url else "❌ No database URL found!")
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -29,27 +39,42 @@ class User(db.Model):
         }
     
 def wait_for_db():
-    max_retries = 5
-    retry_delay = 5
+    max_retries = 10  # Increased for Railway
+    retry_delay = 3   # Reduced delay for faster startup
 
+    print("🔄 Waiting for database connection...")
     for attempt in range(max_retries):
         try:
-            db_url = os.getenv('DB_URL') or os.getenv('DATABASE_URL')
+            db_url = os.getenv('DB_URL')
+            if not db_url:
+                database_url = os.getenv('DATABASE_URL')
+                if database_url:
+                    db_url = database_url.replace('postgres://', 'postgresql://') if database_url.startswith('postgres://') else database_url
+            
+            if not db_url:
+                print("❌ No database URL found in environment variables")
+                return False
+                
             engine = create_engine(db_url)
             conn = engine.connect()
             conn.close()
+            print(f"✅ Database connection successful on attempt {attempt + 1}")
             return True
-        except OperationalError:
+        except OperationalError as e:
+            print(f"❌ Database connection failed on attempt {attempt + 1}: {e}")
             if attempt < max_retries - 1:
                 time.sleep(retry_delay)
                 continue
-            raise
+            print("❌ All database connection attempts failed")
+            return False
 
 # Wait for the database and create tables
-wait_for_db()
-
-with app.app_context():
-    db.create_all()
+if wait_for_db():
+    with app.app_context():
+        db.create_all()
+        print("✅ Database tables created successfully!")
+else:
+    print("⚠️ Starting without database connection (will fail on first request)")
     
 #create a test route
 @app.route('/test', methods=['GET'])
@@ -93,6 +118,7 @@ def get_user(id):
         return make_response(jsonify({'message': 'user not found'}), 404)
     except Exception as e:
         return make_response(jsonify({'message': 'error getting user'}), 500)
+
 # update a user
 @app.route('/users/<int:id>', methods=['PUT'])
 def update_user(id):
@@ -129,6 +155,6 @@ def delete_user(id):
         return make_response(jsonify({'message': 'error deleting user'}), 500)
     
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 4000))
+    # Use Railway's PORT environment variable or default to 8080
+    port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)
-    

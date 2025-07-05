@@ -10,7 +10,8 @@ COPY . .
 
 ENV FLASK_APP=app.py
 
-EXPOSE 8080
+# Railway provides PORT environment variable
+EXPOSE $PORT
 
-# Use direct command instead of script
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:8080", "app:app"]
+# Use Railway's PORT environment variable
+CMD ["sh", "-c", "gunicorn --workers 2 --bind 0.0.0.0:$PORT app:app"]
