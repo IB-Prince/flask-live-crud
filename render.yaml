@@ -13,7 +13,7 @@ services:
           name: flask-crud-db
           property: connectionString
     dockerCommand: gunicorn --bind 0.0.0.0:$PORT app:app
-  - type: pserv
-    name: flask-crud-db
-    env: postgresql
+    healthCheckPath: /test
+databases:
+  - name: flask-crud-db
     plan: free
