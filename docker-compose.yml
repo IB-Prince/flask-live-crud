@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  flask_app:
+    container_name: flask_app
+    image: princeiqbal/flask_live_app:1.0.0
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      - DB_URL=postgresql://prince:prince@flask_db:5432/flask_live_crud
+    depends_on:
+      flask_db:
+        condition: service_healthy
+    restart: on-failure
+  flask_db:
+    container_name: flask_db
+    image: postgres:12
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=prince
+      - POSTGRES_USER=prince
+      - POSTGRES_DB=flask_live_crud
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prince -d flask_live_crud"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  pgdata: {}
+
