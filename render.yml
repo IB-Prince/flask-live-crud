@@ -1,0 +1,19 @@
+service:
+  - type: web
+    name: flask-live-crud
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m flask run --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: FLASK_APP
+        value: app.py
+      - key: DB_URL
+        fromDatabase:
+          name: flask-crud-db
+          property: connectionString
+  - type: pserv
+    name: flask-crud-db
+    env: postgresql
+    plan: free
+    databaseName: flask_live_crud
+    user: prince
