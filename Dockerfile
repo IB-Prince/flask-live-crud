@@ -3,6 +3,6 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
-EXPOSE $PORT
-CMD ["gunicorn","--workers", "2", "--bind", "0.0.0.0:$PORT", "app:app"]
+
+CMD exec gunicorn --workers 2 --bind 0.0.0.0:$PORT app:app
 
