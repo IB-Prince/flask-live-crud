@@ -17,4 +17,3 @@ services:
     name: flask-crud-db
     env: postgresql
     plan: free
-    databaseName: flask_live_crud
