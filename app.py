@@ -14,11 +14,27 @@ if not db_url:
     if database_url:
         # Fix Heroku/Railway postgres:// to postgresql://
         db_url = database_url.replace('postgres://', 'postgresql://') if database_url.startswith('postgres://') else database_url
-    else:
-        # Default for development (this will fail in production, which is expected)
-        db_url = 'postgresql://user:password@localhost:5432/database'
+
+# If still no database URL, provide a fallback for Railway
+if not db_url:
+    # Check for Railway's automatic database variables
+    railway_db_url = os.getenv('PGDATABASE')
+    railway_db_host = os.getenv('PGHOST')
+    railway_db_user = os.getenv('PGUSER')
+    railway_db_password = os.getenv('PGPASSWORD')
+    railway_db_port = os.getenv('PGPORT', '5432')
+    
+    if all([railway_db_host, railway_db_user, railway_db_password, railway_db_url]):
+        db_url = f"postgresql://{railway_db_user}:{railway_db_password}@{railway_db_host}:{railway_db_port}/{railway_db_url}"
+        print(f"🔧 Constructed database URL from Railway variables")
+
+if not db_url:
+    print("❌ No database configuration found!")
+    # Don't fail completely, let the app start for health checks
+    db_url = 'postgresql://dummy:dummy@localhost:5432/dummy'
 
 print(f"🔗 Using database URL: {db_url[:50]}..." if db_url else "❌ No database URL found!")
+print(f"🔍 Available environment variables: {[k for k in os.environ.keys() if 'PG' in k or 'DB' in k or 'DATABASE' in k]}")
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
@@ -69,12 +85,15 @@ def wait_for_db():
             return False
 
 # Wait for the database and create tables
-if wait_for_db():
+print("🚀 Starting Flask application...")
+db_connected = wait_for_db()
+
+if db_connected:
     with app.app_context():
         db.create_all()
         print("✅ Database tables created successfully!")
 else:
-    print("⚠️ Starting without database connection (will fail on first request)")
+    print("⚠️ Starting without database connection - health endpoint will still work")
     
 #create a test route
 @app.route('/test', methods=['GET'])
