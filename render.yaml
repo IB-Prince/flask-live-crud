@@ -18,4 +18,3 @@ services:
     env: postgresql
     plan: free
     databaseName: flask_live_crud
-    user: prince
