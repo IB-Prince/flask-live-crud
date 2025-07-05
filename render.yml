@@ -1,9 +1,8 @@
 service:
   - type: web
     name: flask-live-crud
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
+    env: docker
+    repo: https://github.com/IB-Prince/flask-live-crud
     envVars:
       - key: PYTHON_VERSION
         value: 3.12
