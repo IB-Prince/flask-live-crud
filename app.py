@@ -81,6 +81,11 @@ else:
 def test():
     return make_response(jsonify({'message': 'Flask CRUD API is running!'}), 200)
 
+# Health check endpoint that doesn't require database
+@app.route('/health', methods=['GET'])
+def health():
+    return make_response(jsonify({'status': 'healthy', 'service': 'flask-crud-api'}), 200)
+
 # create a user
 @app.route('/users', methods=['POST'])
 def create_user():
