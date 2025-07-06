@@ -40,10 +40,21 @@ function createUser() {
     })
     .then(response => response.json())
     .then(data => {
-        document.getElementById('apiResponse').textContent = JSON.stringify(data, null, 2);
-        document.getElementById('apiResults').style.display = 'block';
+        const apiResponseElement = document.getElementById('apiResponse');
+        const apiResultsElement = document.getElementById('apiResults');
+        if (apiResponseElement && apiResultsElement) {
+            apiResponseElement.textContent = JSON.stringify(data, null, 2);
+            apiResultsElement.style.display = 'block';
+            apiResultsElement.scrollIntoView({ behavior: 'smooth' });
+        } 
+
         document.getElementById('createUserForm').reset();
-        bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
+        const modalElement = document.getElementById('createUserModal');
+        if (modalElement) {
+            bootstrap.Modal.getInstance(modalElement).hide();
+        }
+        
+        showAlert("User created successfully!", 'success')
         
         // Reload users if on users page
         if (typeof loadUsers === 'function') {
@@ -51,7 +62,8 @@ function createUser() {
         }
     })
     .catch(error => {
-        alert('Error creating user: ' + error.message);
+        console.error('Error creating user: ' + error.message);
+        showAlert('Error creating user: ' + error.message, 'danger')
     });
 }
 
