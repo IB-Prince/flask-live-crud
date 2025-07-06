@@ -4,6 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import OperationalError
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
+from flask import render_template, flash, redirect, url_for
 
 app = Flask(__name__)
 
@@ -177,6 +178,41 @@ def delete_user(id):
     except Exception as e:
         db.session.rollback()
         return make_response(jsonify({'message': 'error deleting user'}), 500)
+    
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/users-page')
+def users_page():
+    return render_template('users.html')
+
+@app.route('/docs')
+def docs():
+    """API Documentation endpoint"""
+    api_docs = {
+        "title": "Flask CRUD API",
+        "version": "1.0.0",
+        "description": "A RESTful API for managing users",
+        "endpoints": {
+            "GET /test": "Test API connection",
+            "GET /users": "Get all users",
+            "POST /users": "Create a new user",
+            "GET /users/{id}": "Get user by ID",
+            "PUT /users/{id}": "Update user by ID",
+            "DELETE /users/{id}": "Delete user by ID"
+        },
+        "example_user": {
+            "username": "john_doe",
+            "email": "john@example.com"
+        }
+    }
+    return jsonify(api_docs)
+
+@app.route('/users/<int:user_id>/detail')
+def user_detail(user_id):
+    """Display detailed view of a specific user"""
+    return render_template('user_detail.html', user_id=user_id)
     
 if __name__ == '__main__':
     # Use Railway's PORT environment variable or default to 8080

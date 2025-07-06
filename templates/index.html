@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Flask CRUD API{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="hero-section text-center mb-5">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-rocket text-primary"></i>
+                Flask CRUD API
+            </h1>
+            <p class="lead">A modern REST API built with Flask, PostgreSQL, and deployed on Railway</p>
+            <div class="mt-4">
+                <a href="{{ url_for('users_page') }}" class="btn btn-primary btn-lg me-3">
+                    <i class="fas fa-users me-2"></i>Manage Users
+                </a>
+                <a href="https://web-production-3918c.up.railway.app/test" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-code me-2"></i>View API
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-bolt fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Fast & Efficient</h5>
+                <p class="card-text">Built with Flask and optimized for performance with PostgreSQL database.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Secure</h5>
+                <p class="card-text">Input validation, error handling, and secure database connections.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="fas fa-cloud fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Cloud Ready</h5>
+                <p class="card-text">Containerized with Docker and deployed on Railway platform.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="api-endpoints" class="card shadow">
+    <div class="card-header">
+        <h3 class="mb-0"><i class="fas fa-code me-2"></i>API Endpoints</h3>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Endpoint</th>
+                        <th>Description</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/test</code></td>
+                        <td>Test API connection</td>
+                        <td><button class="btn btn-sm btn-outline-primary test-endpoint" data-url="/test">Test</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/users</code></td>
+                        <td>Get all users</td>
+                        <td><button class="btn btn-sm btn-outline-primary test-endpoint" data-url="/users">Test</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-primary">POST</span></td>
+                        <td><code>/users</code></td>
+                        <td>Create new user</td>
+                        <td><button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">Test</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-success">GET</span></td>
+                        <td><code>/users/{id}</code></td>
+                        <td>Get user by ID</td>
+                        <td><input type="number" class="form-control form-control-sm d-inline-block" id="userId" placeholder="ID" style="width: 60px;"> <button class="btn btn-sm btn-outline-primary" onclick="testGetUser()">Test</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-warning">PUT</span></td>
+                        <td><code>/users/{id}</code></td>
+                        <td>Update user by ID</td>
+                        <td><span class="text-muted">Use Users page</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge bg-danger">DELETE</span></td>
+                        <td><code>/users/{id}</code></td>
+                        <td>Delete user by ID</td>
+                        <td><span class="text-muted">Use Users page</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- API Test Results -->
+<div id="apiResults" class="mt-4" style="display: none;">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">API Response</h5>
+        </div>
+        <div class="card-body">
+            <pre id="apiResponse" class="bg-light p-3 rounded"></pre>
+        </div>
+    </div>
+</div>
+
+<!-- Create User Modal -->
+<div class="modal fade" id="createUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createUserForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="createUser()">Create User</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
