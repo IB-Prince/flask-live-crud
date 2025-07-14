@@ -15,35 +15,19 @@ from dotenv import load_dotenv
 
 app = Flask(__name__)
 
-# Configuration
-db_url = os.getenv('DB_URL')
-if not db_url:
-    database_url = os.getenv('DATABASE_URL')
-    if database_url:
-        # Fix Heroku/Railway postgres:// to postgresql://
-        db_url = database_url.replace('postgres://', 'postgresql://') if database_url.startswith('postgres://') else database_url
+# Database configuration for Railway
+database_url = os.getenv('DATABASE_URL')
+if database_url:
+    # Fix Heroku/Railway postgres:// to postgresql://
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"🔗 Using DATABASE_URL: {database_url[:50]}...")
+else:
+    # Fallback for development
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///fallback.db'
+    print("⚠️ No DATABASE_URL found, using SQLite fallback")
 
-# If still no database URL, provide a fallback for Railway
-if not db_url:
-    # Check for Railway's automatic database variables
-    railway_db_url = os.getenv('PGDATABASE')
-    railway_db_host = os.getenv('PGHOST')
-    railway_db_user = os.getenv('PGUSER')
-    railway_db_password = os.getenv('PGPASSWORD')
-    railway_db_port = os.getenv('PGPORT', '5432')
-    
-    if all([railway_db_host, railway_db_user, railway_db_password, railway_db_url]):
-        db_url = f"postgresql://{railway_db_user}:{railway_db_password}@{railway_db_host}:{railway_db_port}/{railway_db_url}"
-        print(f"🔧 Constructed database URL from Railway variables")
-
-if not db_url:
-    print("❌ No database configuration found!")
-    # Don't fail completely, let the app start for health checks
-    db_url = 'postgresql://dummy:dummy@localhost:5432/dummy'
-
-print(f"🔗 Using database URL: {db_url[:50]}..." if db_url else "❌ No database URL found!")
-print(f"🔍 Available environment variables: {[k for k in os.environ.keys() if 'PG' in k or 'DB' in k or 'DATABASE' in k]}")
-app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # JWT Configuration
@@ -67,45 +51,17 @@ class User(db.Model):
             'email': self.email
         }
     
-def wait_for_db():
-    max_retries = 10  # Increased for Railway
-    retry_delay = 3   # Reduced delay for faster startup
+# Removed wait_for_db function to speed up startup
 
-    print("🔄 Waiting for database connection...")
-    for attempt in range(max_retries):
-        try:
-            db_url = os.getenv('DB_URL')
-            if not db_url:
-                database_url = os.getenv('DATABASE_URL')
-                if database_url:
-                    db_url = database_url.replace('postgres://', 'postgresql://') if database_url.startswith('postgres://') else database_url
-            
-            if not db_url:
-                print("❌ No database URL found in environment variables")
-                return False
-                
-            engine = create_engine(db_url)
-            conn = engine.connect()
-            conn.close()
-            print(f"✅ Database connection successful on attempt {attempt + 1}")
-            return True
-        except OperationalError as e:
-            print(f"❌ Database connection failed on attempt {attempt + 1}: {e}")
-            if attempt < max_retries - 1:
-                time.sleep(retry_delay)
-                continue
-            print("❌ All database connection attempts failed")
-            return False
-
-# Wait for the database and create tables
+# Initialize database in a safer way for Railway
 print("🚀 Starting Flask application...")
-db_connected = wait_for_db()
-
-if db_connected:
+try:
     with app.app_context():
+        # Try to create tables, but don't fail if database is not available
         db.create_all()
         print("✅ Database tables created successfully!")
-else:
+except Exception as e:
+    print(f"⚠️ Database initialization failed: {e}")
     print("⚠️ Starting without database connection - health endpoint will still work")
     
 #create a test route
@@ -116,7 +72,11 @@ def test():
 # Health check endpoint that doesn't require database
 @app.route('/health', methods=['GET'])
 def health():
-    return jsonify({"status": "healthy"}), 200
+    try:
+        return jsonify({"status": "healthy", "timestamp": time.time()}), 200
+    except Exception as e:
+        print(f"Health check error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # create a user
 @app.route('/users', methods=['POST'])
@@ -317,5 +277,10 @@ with app.app_context():
         # Continue anyway - don't crash the app
 
 if __name__ == '__main__':
+    print("🚀 Starting Flask app directly...")
     port = int(os.environ.get('PORT', 8080))
+    print(f"🔗 Starting on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
+else:
+    print("🚀 Flask app loaded for gunicorn...")
+    print(f"🔗 Environment variables: PORT={os.getenv('PORT')}, DATABASE_URL={bool(os.getenv('DATABASE_URL'))}")
