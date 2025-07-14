@@ -10,11 +10,6 @@ COPY . .
 
 ENV FLASK_APP=app.py
 
-# Create a start script
-RUN echo '#!/bin/bash\n\
-PORT="${PORT:-8080}"\n\
-echo "Starting server on port $PORT"\n\
-exec gunicorn --workers 2 --bind "0.0.0.0:$PORT" app:app\n\
-' > /start.sh && chmod +x /start.sh
-
-CMD ["/start.sh"]
+# Use shell form CMD and hardcode port 8080 to avoid $PORT issues on Railway
+EXPOSE 8080
+CMD gunicorn --workers 2 --bind 0.0.0.0:8080 app:app
