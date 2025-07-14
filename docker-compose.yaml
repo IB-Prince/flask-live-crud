@@ -6,7 +6,7 @@ services:
     image: princeiqbal/flask_live_app:1.0.0
     build: .
     ports:
-      - "4000:4000"
+      - "8080:8080"
     environment:
       - DB_URL=postgresql://prince:prince@flask_db:5432/flask_live_crud
     depends_on:

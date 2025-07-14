@@ -10,6 +10,5 @@ COPY . .
 
 ENV FLASK_APP=app.py
 
-# Use shell form CMD and hardcode port 8080 to avoid $PORT issues on Railway
 EXPOSE 8080
-CMD gunicorn --workers 2 --bind 0.0.0.0:8080 app:app
+CMD gunicorn --workers 2 --bind 0.0.0.0:${PORT:-8080} app:app

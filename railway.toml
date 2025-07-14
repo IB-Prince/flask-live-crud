@@ -9,4 +9,3 @@ restartPolicyMaxRetries = 10
 
 [env]
 JWT_SECRET = "9d3f1b9282c04d0ebf7cddf92fc1f69a54cd"
-DATABASE_URL = "postgresql://postgres:ZNEkjIpVLYaQxjaboIdjoJfLGNsURFzc@postgres.railway.internal:5432/railway"
