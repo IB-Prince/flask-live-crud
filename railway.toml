@@ -2,11 +2,10 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "gunicorn --bind 0.0.0.0:8080 --workers 2 app:app"
 healthcheckPath = "/health"
 healthcheckTimeout = 100
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
 
 [env]
-PORT = "8080"
+JWT_SECRET = "9d3f1b9282c04d0ebf7cddf92fc1f69a54cd"

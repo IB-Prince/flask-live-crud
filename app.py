@@ -115,8 +115,14 @@ def test():
 
 # Health check endpoint that doesn't require database
 @app.route('/health', methods=['GET'])
-def health():
-    return make_response(jsonify({'status': 'healthy', 'service': 'flask-crud-api'}), 200)
+def health_check():
+    """Health check endpoint for Railway"""
+    return jsonify({
+        "status": "healthy",
+        "service": "flask-crud-api",
+        "version": "1.0.0",
+        "timestamp": time.time()
+    }), 200
 
 # create a user
 @app.route('/users', methods=['POST'])
@@ -316,6 +322,21 @@ def update_db():
             print("Database updated successfully!")
         except Exception as e:
             print(f"Error updating database: {e}")
+
+with app.app_context():
+    try:
+        # Check if we need to update tables
+        inspector = db.inspect(db.engine)
+        if 'users' in inspector.get_table_names() and 'password' not in inspector.get_columns('users'):
+            db.engine.execute('ALTER TABLE users ADD COLUMN password TEXT')
+            print("Added password column to users table")
+        
+        # Create all tables if they don't exist
+        db.create_all()
+        print("Database tables created/verified!")
+    except Exception as e:
+        print(f"Database migration check error: {e}")
+        # Continue anyway - don't crash the app
 
 if __name__ == '__main__':
     # Use Railway's PORT environment variable or default to 8080

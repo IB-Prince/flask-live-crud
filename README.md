@@ -31,6 +31,15 @@ A RESTful API built with Flask and PostgreSQL for managing users with full CRUD 
 | PUT    | `/users/<id>` | Update user by ID |
 | DELETE | `/users/<id>` | Delete user by ID |
 
+### Authentication Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST   | `/register` | Register new user with username, email, and password |
+| POST   | `/login` | Login and receive JWT token |
+| GET    | `/profile` | Get user profile (requires authentication) |
+| GET    | `/protected-data` | Access protected data (requires authentication) |
+
 ## 🏃‍♂️ Quick Start
 
 ### Prerequisites
@@ -80,6 +89,28 @@ curl -X PUT http://localhost:4000/users/1 \
 curl -X DELETE http://localhost:4000/users/1
 ```
 
+### Authentication Examples
+
+#### Register a User
+```bash
+curl -X POST https://your-app.up.railway.app/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john_doe", "email": "john@example.com", "password": "securepassword"}'
+```
+
+#### Login
+```bash
+curl -X POST https://your-app.up.railway.app/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "john_doe", "password": "securepassword"}'
+```
+
+#### Access Protected Route
+```bash
+curl -X GET https://your-app.up.railway.app/profile \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
 ## 🗄️ Database
 
 The application uses PostgreSQL with the following configuration:
@@ -122,6 +153,30 @@ This application is ready for deployment on platforms like:
 - Railway
 - AWS
 - Google Cloud Platform
+
+## 🚂 Railway Deployment
+
+This application is configured for seamless deployment on Railway:
+
+1. **Connect your GitHub repository** to Railway
+2. **Create a PostgreSQL database** service in the same Railway project
+3. **Set environment variables** in Railway dashboard:
+   - `JWT_SECRET` - A strong secret key for JWT authentication
+   - `PORT` - Will be automatically set by Railway
+   - `DATABASE_URL` - Will be automatically provided by Railway's PostgreSQL
+
+### CI/CD Pipeline
+
+This project includes automatic CI/CD through Railway:
+- Push to GitHub → Automatic build → Automatic deployment
+- Database migrations run automatically during startup
+- Health checks ensure the application is running correctly
+
+### Accessing your Railway App
+
+- **API Endpoint**: `https://your-app-name.up.railway.app/`
+- **API Documentation**: `https://your-app-name.up.railway.app/docs`
+- **Web Interface**: `https://your-app-name.up.railway.app/`
 
 ## 🤝 Contributing
 
