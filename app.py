@@ -115,14 +115,8 @@ def test():
 
 # Health check endpoint that doesn't require database
 @app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint for Railway"""
-    return jsonify({
-        "status": "healthy",
-        "service": "flask-crud-api",
-        "version": "1.0.0",
-        "timestamp": time.time()
-    }), 200
+def health():
+    return jsonify({"status": "healthy"}), 200
 
 # create a user
 @app.route('/users', methods=['POST'])
@@ -339,6 +333,5 @@ with app.app_context():
         # Continue anyway - don't crash the app
 
 if __name__ == '__main__':
-    # Use Railway's PORT environment variable or default to 8080
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)
