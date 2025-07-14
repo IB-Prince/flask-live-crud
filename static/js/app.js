@@ -22,12 +22,57 @@ function testGetUser() {
     testEndpoint(`/users/${userId}`);
 }
 
+// Function to get the authentication token
+function getAuthToken() {
+    return localStorage.getItem('accessToken');
+}
+
+// Function to check if user is logged in
+function isLoggedIn() {
+    return !!getAuthToken();
+}
+
+// Function to make authenticated API calls
+function authenticatedFetch(url, options = {}) {
+    const token = getAuthToken();
+    
+    if (!token) {
+        return Promise.reject(new Error('Authentication required'));
+    }
+    
+    const headers = {
+        ...options.headers,
+        'Authorization': `Bearer ${token}`
+    };
+    
+    return fetch(url, {
+        ...options,
+        headers
+    });
+}
+
+// Function to redirect to login if not authenticated
+function requireAuth() {
+    if (!isLoggedIn()) {
+        showAlert('Please log in to access this feature', 'warning');
+        setTimeout(() => {
+            window.location.href = '/login-page';
+        }, 1000);
+        return false;
+    }
+    return true;
+}
+
+// Update your existing createUser function to use authentication when needed
 function createUser() {
+    // For admin functions, you might want to require auth
+    // if (!requireAuth()) return;
+    
     const username = document.getElementById('username').value;
     const email = document.getElementById('email').value;
     
     if (!username || !email) {
-        alert('Please fill in all fields');
+        showAlert('Please fill in all fields', 'warning');
         return;
     }
     
@@ -35,6 +80,8 @@ function createUser() {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            // Uncomment if you want to require auth for user creation
+            // 'Authorization': `Bearer ${getAuthToken()}`
         },
         body: JSON.stringify({ username, email })
     })

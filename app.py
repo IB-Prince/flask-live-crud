@@ -5,6 +5,13 @@ from sqlalchemy.exc import OperationalError
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask import render_template, flash, redirect, url_for
+from flask import Flask, request, jsonify, render_template
+from flask_sqlalchemy import SQLAlchemy
+from flask_jwt_extended import (
+    JWTManager, create_access_token, jwt_required, get_jwt_identity
+)
+from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
 
 app = Flask(__name__)
 
@@ -39,7 +46,11 @@ print(f"🔍 Available environment variables: {[k for k in os.environ.keys() if 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# JWT Configuration
+app.config['JWT_SECRET_KEY'] = os.getenv('JWT_SECRET', 'super-secret-key-for-development')  # Change in production
+
 db = SQLAlchemy(app)
+jwt = JWTManager(app)
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -47,6 +58,7 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.Text, nullable=True)
 
     def json(self):
         return {
@@ -213,7 +225,98 @@ def docs():
 def user_detail(user_id):
     """Display detailed view of a specific user"""
     return render_template('user_detail.html', user_id=user_id)
-    
+
+# Authentication routes
+@app.route('/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        if not data or not data.get('username') or not data.get('password') or not data.get('email'):
+            return jsonify({"error": "Username, email, and password are required"}), 400
+        
+        # Check if user already exists
+        if User.query.filter_by(username=data['username']).first():
+            return jsonify({"error": "Username already exists"}), 409
+        
+        if User.query.filter_by(email=data['email']).first():
+            return jsonify({"error": "Email already exists"}), 409
+        
+        hashed_pw = generate_password_hash(data['password'])
+        new_user = User(
+            username=data['username'], 
+            email=data['email'], 
+            password=hashed_pw
+        )
+        db.session.add(new_user)
+        db.session.commit()
+        return jsonify({"message": "User registered successfully!"}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Registration failed: {str(e)}"}), 500
+
+@app.route('/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        
+        # Validate input
+        if not data or not data.get('username') or not data.get('password'):
+            return jsonify({"error": "Username and password are required"}), 400
+        
+        user = User.query.filter_by(username=data['username']).first()
+        if user and user.password and check_password_hash(user.password, data['password']):
+            token = create_access_token(identity=user.username)
+            return jsonify({
+                "access_token": token, 
+                "message": "Login successful",
+                "user": user.json()
+            }), 200
+        return jsonify({"error": "Invalid credentials"}), 401
+    except Exception as e:
+        return jsonify({"error": f"Login failed: {str(e)}"}), 500
+
+@app.route('/profile', methods=['GET'])
+@jwt_required()
+def profile():
+    current_username = get_jwt_identity()
+    user = User.query.filter_by(username=current_username).first()
+    if user:
+        return jsonify(user=user.json()), 200
+    return jsonify({"error": "User not found"}), 404
+
+# Update an existing route to require authentication
+@app.route('/protected-data', methods=['GET'])
+@jwt_required()
+def protected_data():
+    current_username = get_jwt_identity()
+    return jsonify({
+        "message": f"This is protected data for {current_username}",
+        "timestamp": time.time()
+    }), 200
+
+@app.route('/login-page')
+def login_page():
+    """Render the login page"""
+    return render_template('login.html')
+
+@app.route('/register-page')
+def register_page():
+    return render_template('register.html')
+
+# Add this to your app.py if you need to update existing tables
+@app.cli.command('update-db')
+def update_db():
+    """Add new columns to existing tables."""
+    with app.app_context():
+        try:
+            # Try to add password column if it doesn't exist
+            db.engine.execute('ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT')
+            print("Database updated successfully!")
+        except Exception as e:
+            print(f"Error updating database: {e}")
+
 if __name__ == '__main__':
     # Use Railway's PORT environment variable or default to 8080
     port = int(os.environ.get('PORT', 8080))

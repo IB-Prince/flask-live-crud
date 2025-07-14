@@ -11,6 +11,7 @@ A RESTful API built with Flask and PostgreSQL for managing users with full CRUD 
 - **PostgreSQL** database integration
 - **Docker** containerization
 - **Input validation** and error handling
+- **Users can now register, login** and access protected endpoints
 
 ## 🛠️ Tech Stack
 
