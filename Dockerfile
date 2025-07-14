@@ -11,4 +11,4 @@ COPY . .
 ENV FLASK_APP=app.py
 
 EXPOSE 8080
-CMD gunicorn --workers 2 --bind 0.0.0.0:${PORT:-8080} app:app
+CMD gunicorn --workers 2 --bind 0.0.0.0:8080 app:app

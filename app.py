@@ -305,31 +305,15 @@ def login_page():
 def register_page():
     return render_template('register.html')
 
-# Add this to your app.py if you need to update existing tables
-@app.cli.command('update-db')
-def update_db():
-    """Add new columns to existing tables."""
-    with app.app_context():
-        try:
-            # Try to add password column if it doesn't exist
-            db.engine.execute('ALTER TABLE users ADD COLUMN IF NOT EXISTS password TEXT')
-            print("Database updated successfully!")
-        except Exception as e:
-            print(f"Error updating database: {e}")
+# Removed CLI command that used raw SQL - not compatible with Railway
 
 with app.app_context():
     try:
-        # Check if we need to update tables
-        inspector = db.inspect(db.engine)
-        if 'users' in inspector.get_table_names() and 'password' not in inspector.get_columns('users'):
-            db.engine.execute('ALTER TABLE users ADD COLUMN password TEXT')
-            print("Added password column to users table")
-        
         # Create all tables if they don't exist
         db.create_all()
         print("Database tables created/verified!")
     except Exception as e:
-        print(f"Database migration check error: {e}")
+        print(f"Database setup error: {e}")
         # Continue anyway - don't crash the app
 
 if __name__ == '__main__':
