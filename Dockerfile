@@ -10,7 +10,11 @@ COPY . .
 
 ENV FLASK_APP=app.py
 
-EXPOSE 8080
+# Create a start script
+RUN echo '#!/bin/bash\n\
+PORT="${PORT:-8080}"\n\
+echo "Starting server on port $PORT"\n\
+exec gunicorn --workers 2 --bind "0.0.0.0:$PORT" app:app\n\
+' > /start.sh && chmod +x /start.sh
 
-# Simple direct command without PORT variable
-CMD ["gunicorn", "--workers", "2", "--bind", "0.0.0.0:8080", "app:app"]
+CMD ["/start.sh"]
